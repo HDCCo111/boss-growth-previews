@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint Scoreboard Preview · Boss Growth Machine</title>
+<style>
+  :root{
+    --bg:#1b1719; --panel:#252022; --panel2:#2e282a; --line:#3a3335;
+    --ink:#f6efe6; --muted:#b8aca2; --red:#E3262E; --orange:#FF6B1A; --gold:#F7C548; --green:#3fae6a;
+    --hbn-green:#2f6b4f; --hbn-tan:#e9dcc4; --hbn-gold:#c9a227;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  .bar{position:sticky;top:0;z-index:10;background:var(--gold);color:#2a2000;padding:8px 14px;font-size:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .bar b{margin-right:6px}
+  .bar button{border:0;border-radius:999px;padding:6px 12px;font-weight:600;cursor:pointer;background:#fff8e1;color:#2a2000}
+  .bar button.on{background:#2a2000;color:#fff8e1}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+  .view{display:none}.view.on{display:block}
+  header.app{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--red),var(--orange),var(--gold));display:grid;place-items:center;font-weight:900;color:#1b1719}
+  .brand small{display:block;color:var(--muted);font-size:12px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--panel2);color:var(--muted)}
+  .rule{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--red),var(--orange),var(--gold));margin:10px 0 18px}
+  h1{font-size:28px;margin:0;letter-spacing:.5px;text-transform:uppercase}
+  h2{font-size:18px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.6px}
+  .grid{display:grid;gap:14px}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .big{font-size:34px;font-weight:800}
+  .lbl{color:var(--muted);font-size:13px}
+  .money{background:linear-gradient(135deg,#3a1a16,#2a1d12);border-color:#5a2e22}
+  .money .big{color:var(--gold);font-size:44px}
+  .track{height:14px;background:var(--panel2);border-radius:999px;overflow:hidden;margin:10px 0 6px}
+  .fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange),var(--gold))}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .tag{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700}
+  .t-new{background:#40302a;color:var(--orange)} .t-quote{background:#3d3620;color:var(--gold)} .t-booked{background:#1f3a2a;color:#7fe0a3} .t-lost{background:#3a2626;color:#d99}
+  .weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .wk{background:var(--panel2);border-radius:12px;padding:12px;font-size:13px}
+  .wk b{display:block;margin-bottom:6px}
+  .wk.done{outline:2px solid var(--green)} .wk.now{outline:2px solid var(--gold)}
+  ul.chk{list-style:none;padding:0;margin:0}
+  ul.chk li{padding:3px 0}
+  .report{background:#fffdf8;color:#2a2224;border-radius:14px;padding:22px;max-width:640px;margin:0 auto}
+  .report h1{color:#2a2224;font-size:22px}
+  .report .rule{margin:8px 0 16px}
+  .report .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee3d6;font-size:15px}
+  .report .hero{text-align:center;padding:14px;background:#fff3d6;border-radius:12px;margin:12px 0}
+  .report .hero .n{font-size:40px;font-weight:900;color:#b3261e}
+  .report .q{margin-top:14px;padding:12px;border-left:4px solid var(--orange);background:#fff7ef}
+  .pulse{--ink:#24302a}
+  .pulse-shell{background:var(--hbn-tan);color:#24302a;border-radius:16px;padding:18px}
+  .pulse-shell h1{color:#1e4a36}
+  .pulse-shell .card{background:#fffaf0;border-color:#d8c8a8;color:#24302a}
+  .pulse-shell .lbl{color:#6b6250}
+  .pulse-shell th{color:#6b6250} .pulse-shell td,.pulse-shell th{border-color:#e2d4b8}
+  .pulse-shell .rule{background:linear-gradient(90deg,var(--hbn-green),var(--hbn-gold))}
+  .flag{color:#b3261e;font-weight:700} .ok{color:#1e6b45;font-weight:700}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+  .flow span{background:#fffaf0;border:1px solid #d8c8a8;border-radius:10px;padding:8px 10px}
+  .note{font-size:12px;color:var(--muted);margin-top:10px}
+  @media(max-width:700px){.weeks{grid-template-columns:1fr 1fr}.big{font-size:28px}.money .big{font-size:36px}}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>PREVIEW · sample data</b>
+  <button class="on" data-v="client">1. Client app: Sprint Scoreboard</button>
+  <button data-v="report">2. Friday Money Report</button>
+  <button data-v="pulse">3. HBN Pulse: all sprints</button>
+</div>
+
+<div class="wrap">
+
+<!-- CLIENT VIEW -->
+<section class="view on" id="v-client">
+  <header class="app">
+    <div class="brand"><div class="logo">B</div><div><b>BLZN Tacos</b><small>Your Growth Machine · powered by Mike B Marketing</small></div></div>
+    <span class="pill">Holiday Catering Sprint · Day 12 of 30</span>
+  </header>
+  <h1>Your Sprint Scoreboard</h1>
+  <div class="rule"></div>
+
+  <div class="grid g2">
+    <div class="card money">
+      <div class="lbl">Dollars booked so far</div>
+      <div class="big">$2,250</div>
+      <div class="track"><div class="fill" style="width:75%"></div></div>
+      <div class="lbl">75% of your $3,000 sprint goal · 18 days left</div>
+    </div>
+    <div class="card">
+      <div class="lbl">For every $1 you paid us</div>
+      <div class="big">$2.82 booked</div>
+      <div class="lbl">$2,250 booked ÷ $798 this month · $1,125 in deposits already collected</div>
+    </div>
+  </div>
+
+  <div class="grid g4" style="margin-top:14px">
+    <div class="card"><div class="lbl">Catering requests</div><div class="big">7</div><div class="lbl">Goal: 10 in 30 days</div></div>
+    <div class="card"><div class="lbl">Quotes sent</div><div class="big">5</div><div class="lbl">All within the same day</div></div>
+    <div class="card"><div class="lbl">Orders booked</div><div class="big">3</div><div class="lbl">Goal: 4+</div></div>
+    <div class="card"><div class="lbl">Board QR scans</div><div class="big">41</div><div class="lbl">Spotlight Board, this sprint</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Your sprint, week by week</h2>
+    <div class="weeks">
+      <div class="wk done"><b>Week 1 · Stop the leaks ✅</b>Google fixed · Toast fixed · Catering form live · Missed-call text back on</div>
+      <div class="wk now"><b>Week 2 · Tell the town ⏳</b>Holiday packages live · Posts 3×/week · Board QR live · Text Club push</div>
+      <div class="wk"><b>Week 3 · Go to the buyers</b>Packet to 50 local offices · Brewery catering night · Regulars text</div>
+      <div class="wk"><b>Week 4 · Close and collect</b>Follow up every quote · Deposits · Review requests</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Catering pipeline</h2>
+    <table>
+      <thead><tr><th>Request</th><th>Date</th><th>Guests</th><th>Value</th><th>Came from</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Office holiday lunch (sample)</td><td>Dec 12</td><td>40</td><td>$900</td><td>Catering form</td><td><span class="tag t-booked">BOOKED</span></td></tr>
+        <tr><td>Church fellowship (sample)</td><td>Dec 14</td><td>60</td><td>$750</td><td>Board QR</td><td><span class="tag t-booked">BOOKED</span></td></tr>
+        <tr><td>Gym member party (sample)</td><td>Dec 18</td><td>30</td><td>$600</td><td>Google</td><td><span class="tag t-booked">BOOKED</span></td></tr>
+        <tr><td>Shipyard crew lunch (sample)</td><td>Dec 19</td><td>80</td><td>$1,200</td><td>Packet email</td><td><span class="tag t-quote">QUOTE SENT</span></td></tr>
+        <tr><td>Birthday party (sample)</td><td>Dec 20</td><td>25</td><td>$500</td><td>Missed-call text</td><td><span class="tag t-quote">QUOTE SENT</span></td></tr>
+        <tr><td>School staff lunch (sample)</td><td>Dec 16</td><td>35</td><td>—</td><td>Facebook</td><td><span class="tag t-new">NEW · reply today</span></td></tr>
+        <tr><td>Realtor open house (sample)</td><td>Dec 6</td><td>20</td><td>—</td><td>Catering form</td><td><span class="tag t-lost">DATE TAKEN</span></td></tr>
+      </tbody>
+    </table>
+    <div class="note">Every row is sample data for this preview. Live version pulls from BLZN's catering pipeline.</div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h2>Next 7 days</h2><p style="margin:0">Dec 12 · Office holiday lunch · 40 guests<br>Dec 14 · Church fellowship · 60 guests</p><div class="lbl" style="margin-top:6px">Average reply time to new requests: 22 minutes</div></div>
+    <div class="card"><h2>Reviews</h2><div class="big">31 <span style="font-size:16px">★ 4.7</span></div><div class="lbl">+3 new this sprint · every review answered</div></div>
+    <div class="card"><h2>Your one move this week</h2><p style="margin:0">Call back the <b>school staff lunch</b> request today. Same-day replies book 2 to 3 times more often.</p></div>
+  </div>
+</section>
+
+<!-- FRIDAY REPORT -->
+<section class="view" id="v-report">
+  <div class="report">
+    <div style="font-size:12px;color:#7a6e64">Friday Money Report · Week 2 · Holiday Catering Sprint</div>
+    <h1>BLZN, here's your money this week 🔥</h1>
+    <div class="rule"></div>
+    <div class="hero"><div style="font-size:13px">Dollars booked so far</div><div class="n">$2,250</div><div style="font-size:13px">of your $3,000 goal · 18 days left</div></div>
+    <div class="row"><span>For every $1 you paid us</span><b>$2.82 booked</b></div>
+    <div class="row"><span>New catering requests this week</span><b>4</b></div>
+    <div class="row"><span>Quotes sent</span><b>3</b></div>
+    <div class="row"><span>Orders booked this week</span><b>2 ($1,500)</b></div>
+    <div class="row"><span>Deposits collected this week</span><b>$750</b></div>
+    <div class="row"><span>Spotlight Board QR scans</span><b>23</b></div>
+    <div class="row"><span>New Google reviews</span><b>2 (both answered)</b></div>
+    <div class="row"><span>Booked in the next 7 days</span><b>2 events · 100 guests</b></div>
+    <div style="margin-top:14px"><b>What we did this week</b><br>Holiday Catering page and flyer live · 3 posts · Google "book us for your holiday party" post · Board QR switched to Book Holiday Catering.</div>
+    <div style="margin-top:10px"><b>Next week</b><br>Holiday catering packet goes to 50 local offices · brewery catering night · regulars text.</div>
+    <div class="q"><b>One question for you:</b> Which Saturday in December do you want to keep open for your biggest holiday order?</div>
+    <div style="font-size:11px;color:#7a6e64;margin-top:12px">Sample data. Arrives every Friday by text and email, and lives in your Growth Machine app.</div>
+  </div>
+</section>
+
+<!-- PULSE VIEW -->
+<section class="view pulse" id="v-pulse">
+  <div class="pulse-shell">
+    <h1>HBN Pulse · Sprint Command</h1>
+    <div class="rule"></div>
+    <div class="flow" style="margin-bottom:14px">
+      <span>Lead + Money Map (Pulse)</span>→<span>Sprint starts in client's Growth Machine</span>→<span>Requests, quotes, bookings logged daily</span>→<span>Friday Money Report sent</span>→<span>Pulse rolls up every client</span>
+    </div>
+    <div class="grid g4">
+      <div class="card"><div class="lbl">Active sprints</div><div class="big">1</div><div class="lbl">Test client only</div></div>
+      <div class="card"><div class="lbl">Client dollars booked</div><div class="big">$2,250</div></div>
+      <div class="card"><div class="lbl">Sprints on pace</div><div class="big">1 / 1</div></div>
+      <div class="card"><div class="lbl">Ready for Full Blaze pitch</div><div class="big">1</div><div class="lbl">Booked 3x+ their fee</div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Every sprint at a glance</h2>
+      <table>
+        <thead><tr><th>Client</th><th>Brand</th><th>Day</th><th>Booked vs goal</th><th>Requests vs goal</th><th>Paid us?</th><th>Waiting on client</th><th>Pace</th></tr></thead>
+        <tbody>
+          <tr><td>BLZN Tacos</td><td>Mike B Marketing</td><td>12 / 30</td><td>$2,250 / $3,000</td><td>7 / 10</td><td class="ok">Yes</td><td class="flag">Host agreement unsigned</td><td class="ok">ON PACE</td></tr>
+          <tr><td>Next client (slot)</td><td>Mike B or HBN</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="color:#6b6250">Rules: under 1 request per 3 days by day 10 = red flag + task for the account owner. Booked 3x their fee = upsell flag. Unpaid invoice or unsigned agreement = shows in Waiting on client.</div>
+    </div>
+  </div>
+</section>
+
+</div>
+<script>
+  document.querySelectorAll('.bar button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.bar button').forEach(function(x){x.classList.remove('on')});
+      document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on')});
+      b.classList.add('on');
+      document.getElementById('v-'+b.dataset.v).classList.add('on');
+      window.scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>
